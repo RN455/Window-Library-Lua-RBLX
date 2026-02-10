@@ -1,75 +1,160 @@
 local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 local Library = {}
 
 function Library:NewWindow(title)
-    local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-    
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "MyCustomLibrary"
+    ScreenGui.Parent = CoreGui
+    ScreenGui.ResetOnSpawn = false
+
     local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 250, 0, 350)
     MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
-    MainFrame.Draggable = true 
+    MainFrame.Draggable = true
     MainFrame.Parent = ScreenGui
+
+    local UICorner_Main = Instance.new("UICorner")
+    UICorner_Main.CornerRadius = UDim.new(0, 8)
+    UICorner_Main.Parent = MainFrame
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, 0, 0, 35)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TitleLabel.Text = "  " .. title
+    TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+    TitleLabel.Font = Enum.Font.SourceSansBold
+    TitleLabel.TextSize = 18
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = MainFrame
+
+    local UICorner_Title = Instance.new("UICorner")
+    UICorner_Title.CornerRadius = UDim.new(0, 8)
+    UICorner_Title.Parent = TitleLabel
+
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Size = UDim2.new(0, 30, 0, 30)
+    CloseButton.Position = UDim2.new(1, -32, 0, 2)
+    CloseButton.BackgroundTransparency = 1
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.TextSize = 20
+    CloseButton.Parent = TitleLabel
+
+    CloseButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
 
     local Container = Instance.new("ScrollingFrame")
     Container.Position = UDim2.new(0, 5, 0, 40)
     Container.Size = UDim2.new(1, -10, 1, -45)
     Container.BackgroundTransparency = 1
-    Container.CanvasSize = UDim2.new(0, 0, 0, 500)
-    Container.ScrollBarThickness = 2
+    Container.BorderSizePixel = 0
+    Container.ScrollBarThickness = 3
+    Container.CanvasSize = UDim2.new(0, 0, 0, 0)
     Container.Parent = MainFrame
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 7)
+    UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    UIListLayout.Parent = Container
     
-    Instance.new("UIListLayout", Container).Padding = UDim.new(0, 8)
+    UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        Container.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+    end)
+
+    UIS.InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == Enum.KeyCode.RightShift then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
 
     local WindowObj = {}
 
     function WindowObj:NewSection(secTitle)
         local SectionObj = {}
 
-        -- [TOGGLE CODE REMAINS SAME AS BEFORE]
-        function SectionObj:CreateToggle(text, callback)
-            local ToggleButton = Instance.new("TextButton", Container)
-            ToggleButton.Size = UDim2.new(1, 0, 0, 30)
-            ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            ToggleButton.Text = text .. ": OFF"
-            ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+        local SecLabel = Instance.new("TextLabel")
+        SecLabel.Size = UDim2.new(1, -10, 0, 20)
+        SecLabel.Text = "-- " .. secTitle .. " --"
+        SecLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        SecLabel.BackgroundTransparency = 1
+        SecLabel.Font = Enum.Font.SourceSansItalic
+        SecLabel.TextSize = 13
+        SecLabel.Parent = Container
+
+        function SectionObj:CreateButton(text, callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, -10, 0, 30)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Button.Text = text
+            Button.TextColor3 = Color3.new(1, 1, 1)
+            Button.Font = Enum.Font.SourceSans
+            Button.TextSize = 16
+            Button.AutoButtonColor = true
+            Button.Parent = Container
             
-            local toggled = false
-            ToggleButton.MouseButton1Click:Connect(function()
-                toggled = not toggled
-                ToggleButton.Text = text .. (toggled and ": ON" or ": OFF")
-                ToggleButton.BackgroundColor3 = toggled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
-                callback(toggled)
+            Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+
+            Button.MouseButton1Click:Connect(function()
+                task.spawn(callback)
             end)
         end
 
-        -- NEW: SLIDER FUNCTION
+        function SectionObj:CreateToggle(text, callback)
+            local Toggle = Instance.new("TextButton")
+            Toggle.Size = UDim2.new(1, -10, 0, 30)
+            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Toggle.Text = text .. ": OFF"
+            Toggle.TextColor3 = Color3.new(1, 1, 1)
+            Toggle.Font = Enum.Font.SourceSans
+            Toggle.TextSize = 16
+            Toggle.Parent = Container
+
+            Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
+
+            local state = false
+            Toggle.MouseButton1Click:Connect(function()
+                state = not state
+                Toggle.Text = text .. (state and ": ON" or ": OFF")
+                Toggle.BackgroundColor3 = state and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+                task.spawn(callback, state)
+            end)
+        end
+
         function SectionObj:CreateSlider(text, min, max, default, callback)
-            local SliderFrame = Instance.new("Frame", Container)
-            SliderFrame.Size = UDim2.new(1, 0, 0, 45)
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Size = UDim2.new(1, -10, 0, 45)
             SliderFrame.BackgroundTransparency = 1
+            SliderFrame.Parent = Container
 
             local Label = Instance.new("TextLabel", SliderFrame)
             Label.Size = UDim2.new(1, 0, 0, 20)
             Label.Text = text .. " : " .. default
-            Label.TextColor3 = Color3.new(1,1,1)
+            Label.TextColor3 = Color3.new(1, 1, 1)
             Label.BackgroundTransparency = 1
+            Label.Font = Enum.Font.SourceSans
+            Label.TextSize = 14
 
             local SliderBack = Instance.new("Frame", SliderFrame)
-            SliderBack.Size = UDim2.new(1, -10, 0, 10)
-            SliderBack.Position = UDim2.new(0, 5, 0, 25)
-            SliderBack.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            SliderBack.Size = UDim2.new(1, -20, 0, 6)
+            SliderBack.Position = UDim2.new(0, 10, 0, 28)
+            SliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            Instance.new("UICorner", SliderBack)
 
             local SliderFill = Instance.new("Frame", SliderBack)
             SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
             SliderFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
             SliderFill.BorderSizePixel = 0
+            Instance.new("UICorner", SliderFill)
 
             local dragging = false
-
             local function update()
                 local mousePos = UIS:GetMouseLocation().X
                 local sliderPos = SliderBack.AbsolutePosition.X
