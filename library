@@ -33,7 +33,24 @@ function Library:NewWindow(title)
 
     Instance.new("UICorner", TitleLabel).CornerRadius = UDim.new(0, 8)
 
-    -- DRAGGING LOGIC (Fixed so it doesn't interfere with buttons/sliders)
+    -- THE X BUTTON
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -32, 0, 2)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+    CloseBtn.Text = "X"
+    CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+    CloseBtn.Font = Enum.Font.SourceSansBold
+    CloseBtn.TextSize = 18
+    CloseBtn.Parent = TitleLabel
+    
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+
+    -- DRAGGING LOGIC
     local dragToggle, dragStart, startPos
     TitleLabel.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -70,12 +87,10 @@ function Library:NewWindow(title)
     UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     UIListLayout.Parent = Container
     
-    -- AUTO-RESIZE SCROLLING CANVAS
     UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         Container.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    -- HIDE/SHOW WITH RIGHT SHIFT
     UIS.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == Enum.KeyCode.RightShift then
             MainFrame.Visible = not MainFrame.Visible
