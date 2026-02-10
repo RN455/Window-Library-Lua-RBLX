@@ -5,23 +5,19 @@ local Library = {}
 
 function Library:NewWindow(title)
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "MyCustomLibrary"
+    ScreenGui.Name = "RN455_Lib"
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 250, 0, 350)
     MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
-    MainFrame.Draggable = true
     MainFrame.Parent = ScreenGui
 
-    local UICorner_Main = Instance.new("UICorner")
-    UICorner_Main.CornerRadius = UDim.new(0, 8)
-    UICorner_Main.Parent = MainFrame
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, 0, 0, 35)
@@ -31,11 +27,32 @@ function Library:NewWindow(title)
     TitleLabel.Font = Enum.Font.SourceSansBold
     TitleLabel.TextSize = 18
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Active = true -- Necessary for drag input
     TitleLabel.Parent = MainFrame
 
-    local UICorner_Title = Instance.new("UICorner")
-    UICorner_Title.CornerRadius = UDim.new(0, 8)
-    UICorner_Title.Parent = TitleLabel
+    Instance.new("UICorner", TitleLabel).CornerRadius = UDim.new(0, 8)
+
+    -- Fixed Dragging Logic (Title Bar Only)
+    local dragToggle, dragStart, startPos
+    TitleLabel.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragToggle = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragToggle = false
+                end
+            end)
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragToggle then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
 
     local CloseButton = Instance.new("TextButton")
     CloseButton.Size = UDim2.new(0, 30, 0, 30)
@@ -99,12 +116,8 @@ function Library:NewWindow(title)
             Button.TextSize = 16
             Button.AutoButtonColor = true
             Button.Parent = Container
-            
             Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
-
-            Button.MouseButton1Click:Connect(function()
-                task.spawn(callback)
-            end)
+            Button.MouseButton1Click:Connect(function() task.spawn(callback) end)
         end
 
         function SectionObj:CreateToggle(text, callback)
@@ -116,7 +129,6 @@ function Library:NewWindow(title)
             Toggle.Font = Enum.Font.SourceSans
             Toggle.TextSize = 16
             Toggle.Parent = Container
-
             Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
 
             local state = false
@@ -139,8 +151,6 @@ function Library:NewWindow(title)
             Label.Text = text .. " : " .. default
             Label.TextColor3 = Color3.new(1, 1, 1)
             Label.BackgroundTransparency = 1
-            Label.Font = Enum.Font.SourceSans
-            Label.TextSize = 14
 
             local SliderBack = Instance.new("Frame", SliderFrame)
             SliderBack.Size = UDim2.new(1, -20, 0, 6)
@@ -161,7 +171,6 @@ function Library:NewWindow(title)
                 local sliderWidth = SliderBack.AbsoluteSize.X
                 local percentage = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
                 local value = math.floor(min + (max - min) * percentage)
-                
                 SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
                 Label.Text = text .. " : " .. value
                 callback(value)
