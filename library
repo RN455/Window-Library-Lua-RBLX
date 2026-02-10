@@ -1,205 +1,48 @@
-local UIS = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+function WindowObj:NewSection(secTitle)
+    local SectionObj = {}
 
-local Library = {}
+    -- 1. Create a Frame to hold this specific section's contents
+    local SectionFrame = Instance.new("Frame")
+    SectionFrame.Name = secTitle .. "_Section"
+    SectionFrame.BackgroundTransparency = 1
+    SectionFrame.Size = UDim2.new(1, 0, 0, 0) -- Height will auto-adjust
+    SectionFrame.Parent = Container
 
-function Library:NewWindow(title)
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "RN455_Lib"
-    ScreenGui.Parent = CoreGui
-    ScreenGui.ResetOnSpawn = false
-
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 250, 0, 350)
-    MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Active = true
-    MainFrame.Parent = ScreenGui
-
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
-
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, 0, 0, 35)
-    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    TitleLabel.Text = "  " .. title
-    TitleLabel.TextColor3 = Color3.new(1, 1, 1)
-    TitleLabel.Font = Enum.Font.SourceSansBold
-    TitleLabel.TextSize = 18
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Active = true -- Necessary for drag input
-    TitleLabel.Parent = MainFrame
-
-    Instance.new("UICorner", TitleLabel).CornerRadius = UDim.new(0, 8)
-
-    -- Fixed Dragging Logic (Title Bar Only)
-    local dragToggle, dragStart, startPos
-    TitleLabel.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragToggle = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragToggle = false
-                end
-            end)
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragToggle then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Size = UDim2.new(0, 30, 0, 30)
-    CloseButton.Position = UDim2.new(1, -32, 0, 2)
-    CloseButton.BackgroundTransparency = 1
-    CloseButton.Text = "X"
-    CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-    CloseButton.Font = Enum.Font.SourceSansBold
-    CloseButton.TextSize = 20
-    CloseButton.Parent = TitleLabel
-
-    CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
-
-    local Container = Instance.new("ScrollingFrame")
-    Container.Position = UDim2.new(0, 5, 0, 40)
-    Container.Size = UDim2.new(1, -10, 1, -45)
-    Container.BackgroundTransparency = 1
-    Container.BorderSizePixel = 0
-    Container.ScrollBarThickness = 3
-    Container.CanvasSize = UDim2.new(0, 0, 0, 0)
-    Container.Parent = MainFrame
-
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Padding = UDim.new(0, 7)
-    UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    UIListLayout.Parent = Container
+    -- 2. Add a layout to the section frame so buttons stack inside it
+    local SectionLayout = Instance.new("UIListLayout")
+    SectionLayout.Padding = UDim.new(0, 5)
+    SectionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    SectionLayout.Parent = SectionFrame
     
-    UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Container.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+    -- Auto-resize the section frame based on how many buttons are inside
+    SectionLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        SectionFrame.Size = UDim2.new(1, 0, 0, SectionLayout.AbsoluteContentSize.Y + 10)
     end)
 
-    UIS.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == Enum.KeyCode.RightShift then
-            MainFrame.Visible = not MainFrame.Visible
-        end
-    end)
+    -- 3. The Section Title
+    local SecLabel = Instance.new("TextLabel")
+    SecLabel.Size = UDim2.new(1, -10, 0, 25)
+    SecLabel.Text = "-- " .. secTitle .. " --"
+    SecLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    SecLabel.BackgroundTransparency = 1
+    SecLabel.Font = Enum.Font.SourceSansBold
+    SecLabel.TextSize = 14
+    SecLabel.Parent = SectionFrame -- Parented to the SectionFrame!
 
-    local WindowObj = {}
-
-    function WindowObj:NewSection(secTitle)
-        local SectionObj = {}
-
-        local SecLabel = Instance.new("TextLabel")
-        SecLabel.Size = UDim2.new(1, -10, 0, 20)
-        SecLabel.Text = "-- " .. secTitle .. " --"
-        SecLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        SecLabel.BackgroundTransparency = 1
-        SecLabel.Font = Enum.Font.SourceSansItalic
-        SecLabel.TextSize = 13
-        SecLabel.Parent = Container
-
-        function SectionObj:CreateButton(text, callback)
-            local Button = Instance.new("TextButton")
-            Button.Size = UDim2.new(1, -10, 0, 30)
-            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Button.Text = text
-            Button.TextColor3 = Color3.new(1, 1, 1)
-            Button.Font = Enum.Font.SourceSans
-            Button.TextSize = 16
-            Button.AutoButtonColor = true
-            Button.Parent = Container
-            Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
-            Button.MouseButton1Click:Connect(function() task.spawn(callback) end)
-        end
-
-        function SectionObj:CreateToggle(text, callback)
-            local Toggle = Instance.new("TextButton")
-            Toggle.Size = UDim2.new(1, -10, 0, 30)
-            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Toggle.Text = text .. ": OFF"
-            Toggle.TextColor3 = Color3.new(1, 1, 1)
-            Toggle.Font = Enum.Font.SourceSans
-            Toggle.TextSize = 16
-            Toggle.Parent = Container
-            Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
-
-            local state = false
-            Toggle.MouseButton1Click:Connect(function()
-                state = not state
-                Toggle.Text = text .. (state and ": ON" or ": OFF")
-                Toggle.BackgroundColor3 = state and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
-                task.spawn(callback, state)
-            end)
-        end
-
-        function SectionObj:CreateSlider(text, min, max, default, callback)
-            local SliderFrame = Instance.new("Frame")
-            SliderFrame.Size = UDim2.new(1, -10, 0, 45)
-            SliderFrame.BackgroundTransparency = 1
-            SliderFrame.Parent = Container
-
-            local Label = Instance.new("TextLabel", SliderFrame)
-            Label.Size = UDim2.new(1, 0, 0, 20)
-            Label.Text = text .. " : " .. default
-            Label.TextColor3 = Color3.new(1, 1, 1)
-            Label.BackgroundTransparency = 1
-
-            local SliderBack = Instance.new("Frame", SliderFrame)
-            SliderBack.Size = UDim2.new(1, -20, 0, 6)
-            SliderBack.Position = UDim2.new(0, 10, 0, 28)
-            SliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-            Instance.new("UICorner", SliderBack)
-
-            local SliderFill = Instance.new("Frame", SliderBack)
-            SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-            SliderFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-            SliderFill.BorderSizePixel = 0
-            Instance.new("UICorner", SliderFill)
-
-            local dragging = false
-            local function update()
-                local mousePos = UIS:GetMouseLocation().X
-                local sliderPos = SliderBack.AbsolutePosition.X
-                local sliderWidth = SliderBack.AbsoluteSize.X
-                local percentage = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
-                local value = math.floor(min + (max - min) * percentage)
-                SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-                Label.Text = text .. " : " .. value
-                callback(value)
-            end
-
-            SliderBack.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
-                    update()
-                end
-            end)
-
-            UIS.InputChanged:Connect(function(input)
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    update()
-                end
-            end)
-
-            UIS.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = false
-                end
-            end)
-        end
-
-        return SectionObj
+    -- 4. Updated CreateButton to parent to the SectionFrame
+    function SectionObj:CreateButton(text, callback)
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(1, -10, 0, 30)
+        Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        Button.Text = text
+        Button.TextColor3 = Color3.new(1, 1, 1)
+        Button.Parent = SectionFrame -- Parented to the SectionFrame!
+        
+        Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+        Button.MouseButton1Click:Connect(function() task.spawn(callback) end)
     end
 
-    return WindowObj
-end
+    -- [Repeat this pattern for CreateToggle and CreateSlider, changing .Parent = Container to .Parent = SectionFrame]
 
-return Library
+    return SectionObj
+end
