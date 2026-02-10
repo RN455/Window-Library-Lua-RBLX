@@ -2,18 +2,20 @@
 Example Code
 
 ```lua
+
+--LOAD
 local Library = loadstring(Game:HttpGet("https://raw.githubusercontent.com/RN455/Window-Library-Lua-RBLX/refs/heads/main/library"))()
 
 
-
+--CREATE WINDOW
 local MainWindow= Library:NewWindow("window title")
 
 
-
+--CREATE SECTION
 local MiniSection == MainWindow:NewSection("section title")
 
 
-
+--CREATE TOGGLE BUTTON
 MiniWindow:CreateToggle("toggle button", function(value)
 
 if value then
@@ -38,7 +40,7 @@ end
 
 end)
 
-
+-- CREATE SLIDER
 MainWindow:CreateSlider(
 
     "WalkSpeed", -- The name displayed on the UI
@@ -52,3 +54,11 @@ MainWindow:CreateSlider(
     end
 	
 )
+
+
+
+-- CREATE BUTTON
+
+MainSection:CreateButton("Do Action", function()
+    -- Code to execute when the button is clicked
+end)
