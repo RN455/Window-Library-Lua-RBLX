@@ -1,0 +1,111 @@
+local UIS = game:GetService("UserInputService")
+
+local Library = {}
+
+function Library:NewWindow(title)
+    local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 250, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true 
+    MainFrame.Parent = ScreenGui
+
+    local Container = Instance.new("ScrollingFrame")
+    Container.Position = UDim2.new(0, 5, 0, 40)
+    Container.Size = UDim2.new(1, -10, 1, -45)
+    Container.BackgroundTransparency = 1
+    Container.CanvasSize = UDim2.new(0, 0, 0, 500)
+    Container.ScrollBarThickness = 2
+    Container.Parent = MainFrame
+    
+    Instance.new("UIListLayout", Container).Padding = UDim.new(0, 8)
+
+    local WindowObj = {}
+
+    function WindowObj:NewSection(secTitle)
+        local SectionObj = {}
+
+        -- [TOGGLE CODE REMAINS SAME AS BEFORE]
+        function SectionObj:CreateToggle(text, callback)
+            local ToggleButton = Instance.new("TextButton", Container)
+            ToggleButton.Size = UDim2.new(1, 0, 0, 30)
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            ToggleButton.Text = text .. ": OFF"
+            ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+            
+            local toggled = false
+            ToggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                ToggleButton.Text = text .. (toggled and ": ON" or ": OFF")
+                ToggleButton.BackgroundColor3 = toggled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
+                callback(toggled)
+            end)
+        end
+
+        -- NEW: SLIDER FUNCTION
+        function SectionObj:CreateSlider(text, min, max, default, callback)
+            local SliderFrame = Instance.new("Frame", Container)
+            SliderFrame.Size = UDim2.new(1, 0, 0, 45)
+            SliderFrame.BackgroundTransparency = 1
+
+            local Label = Instance.new("TextLabel", SliderFrame)
+            Label.Size = UDim2.new(1, 0, 0, 20)
+            Label.Text = text .. " : " .. default
+            Label.TextColor3 = Color3.new(1,1,1)
+            Label.BackgroundTransparency = 1
+
+            local SliderBack = Instance.new("Frame", SliderFrame)
+            SliderBack.Size = UDim2.new(1, -10, 0, 10)
+            SliderBack.Position = UDim2.new(0, 5, 0, 25)
+            SliderBack.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+            local SliderFill = Instance.new("Frame", SliderBack)
+            SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+            SliderFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+            SliderFill.BorderSizePixel = 0
+
+            local dragging = false
+
+            local function update()
+                local mousePos = UIS:GetMouseLocation().X
+                local sliderPos = SliderBack.AbsolutePosition.X
+                local sliderWidth = SliderBack.AbsoluteSize.X
+                local percentage = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
+                local value = math.floor(min + (max - min) * percentage)
+                
+                SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+                Label.Text = text .. " : " .. value
+                callback(value)
+            end
+
+            SliderBack.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                    update()
+                end
+            end)
+
+            UIS.InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    update()
+                end
+            end)
+
+            UIS.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+        end
+
+        return SectionObj
+    end
+
+    return WindowObj
+end
+
+return Library
