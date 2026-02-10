@@ -1,5 +1,7 @@
 # Window-Library-Lua-RBLX
+Example Code
 
+```lua
 local Library = loadstring(Game:HttpGet("https://raw.githubusercontent.com/RN455/Window-Library-Lua-RBLX/refs/heads/main/library"))()
 
 
@@ -37,8 +39,8 @@ end
 end)
 
 
-
 MainWindow:CreateSlider(
+
     "WalkSpeed", -- The name displayed on the UI
     16,          -- Minimum value (Default Roblox speed)
     200,         -- Maximum value
@@ -48,4 +50,5 @@ MainWindow:CreateSlider(
         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
         print("Current Speed: " .. value)
     end
+	
 )
