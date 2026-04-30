@@ -19,7 +19,7 @@ function Library:NewWindow(title)
 
     Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
-    -- TITLE BAR (DRAG AREA)
+    -- TITLE BAR
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(1, 0, 0, 35)
     TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -28,12 +28,12 @@ function Library:NewWindow(title)
     TitleLabel.Font = Enum.Font.SourceSansBold
     TitleLabel.TextSize = 18
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Active = true 
+    TitleLabel.Active = true
     TitleLabel.Parent = MainFrame
 
     Instance.new("UICorner", TitleLabel).CornerRadius = UDim.new(0, 8)
 
-    -- THE X BUTTON
+    -- CLOSE BUTTON
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -32, 0, 2)
@@ -43,7 +43,7 @@ function Library:NewWindow(title)
     CloseBtn.Font = Enum.Font.SourceSansBold
     CloseBtn.TextSize = 18
     CloseBtn.Parent = TitleLabel
-    
+
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
     CloseBtn.MouseButton1Click:Connect(function()
@@ -51,12 +51,16 @@ function Library:NewWindow(title)
     end)
 
     -- DRAGGING LOGIC
-    local dragToggle, dragStart, startPos
+    local dragToggle = false
+    local dragStart = nil
+    local startPos = nil
+
     TitleLabel.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragToggle = true
             dragStart = input.Position
             startPos = MainFrame.Position
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragToggle = false
@@ -68,7 +72,13 @@ function Library:NewWindow(title)
     UIS.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragToggle then
             local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 
@@ -86,11 +96,12 @@ function Library:NewWindow(title)
     UIListLayout.Padding = UDim.new(0, 7)
     UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     UIListLayout.Parent = Container
-    
+
     UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         Container.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
     end)
 
+    -- RIGHT SHIFT TO SHOW/HIDE WINDOW
     UIS.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == Enum.KeyCode.RightShift then
             MainFrame.Visible = not MainFrame.Visible
@@ -120,8 +131,16 @@ function Library:NewWindow(title)
             Button.Font = Enum.Font.SourceSans
             Button.TextSize = 16
             Button.Parent = Container
+
             Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
-            Button.MouseButton1Click:Connect(function() task.spawn(callback) end)
+
+            Button.MouseButton1Click:Connect(function()
+                if callback then
+                    task.spawn(callback)
+                end
+            end)
+
+            return Button
         end
 
         function SectionObj:CreateToggle(text, callback)
@@ -133,15 +152,22 @@ function Library:NewWindow(title)
             Toggle.Font = Enum.Font.SourceSans
             Toggle.TextSize = 16
             Toggle.Parent = Container
+
             Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
 
             local state = false
+
             Toggle.MouseButton1Click:Connect(function()
                 state = not state
                 Toggle.Text = text .. (state and ": ON" or ": OFF")
                 Toggle.BackgroundColor3 = state and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
-                task.spawn(callback, state)
+
+                if callback then
+                    task.spawn(callback, state)
+                end
             end)
+
+            return Toggle
         end
 
         return SectionObj
